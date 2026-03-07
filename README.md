@@ -1,337 +1,336 @@
-# Book Review Microservice App
+# Book Review Microservice Application
 
-Aplikasi sederhana berbasis **microservice** untuk mengelola data pengguna dan resensi buku menggunakan **Node.js, PostgreSQL, dan MinIO**.
-Seluruh layanan dijalankan menggunakan **Docker Compose** sehingga dapat dideploy dengan satu perintah.
+## Deskripsi Proyek
 
-Project ini dibuat sebagai tugas **UTS Administrasi Server Jaringan (ASJ)**.
+Aplikasi ini merupakan implementasi **CRUD berbasis arsitektur microservice** yang dibuat untuk memenuhi tugas **UTS Administrasi Server Jaringan**.
+
+Aplikasi digunakan untuk mengelola data pengguna dan resensi buku. Data teks disimpan di **PostgreSQL**, sedangkan file gambar disimpan di **MinIO Object Storage**.
+
+Seluruh service dijalankan menggunakan **Docker** dan diorkestrasi dengan **Docker Compose** sehingga seluruh sistem dapat dijalankan hanya dengan satu perintah.
+
+Fitur utama aplikasi:
+
+* Registrasi dan login pengguna
+* CRUD data pengguna
+* CRUD resensi buku
+* Upload gambar ke object storage
+* Penyimpanan metadata di PostgreSQL
+* API Gateway untuk routing request
+* Frontend sederhana berbasis HTML
 
 ---
 
-# 1. Tujuan Proyek
+# Arsitektur Sistem
 
-Proyek ini bertujuan untuk memahami dan mengimplementasikan:
-
-* Konsep **microservice architecture**
-* Integrasi **PostgreSQL** sebagai relational database
-* Integrasi **MinIO** sebagai object storage untuk file upload
-* Containerization menggunakan **Docker**
-* Orkestrasi service menggunakan **Docker Compose**
-* REST API dengan operasi **CRUD**
-
----
-
-# 2. Arsitektur Sistem
-
-Aplikasi terdiri dari **5 service utama**:
-
-| Service    | Deskripsi                                           |
-| ---------- | --------------------------------------------------- |
-| Frontend   | Interface web sederhana untuk interaksi pengguna    |
-| Backend    | Server aplikasi yang menghubungkan frontend dan API |
-| API        | Service utama yang menangani operasi CRUD           |
-| PostgreSQL | Database untuk menyimpan metadata user              |
-| MinIO      | Object storage untuk menyimpan file gambar          |
-
-### Diagram Arsitektur
+Aplikasi ini menggunakan **arsitektur microservice** dengan 5 service utama.
 
 ```
-           +-------------+
-           |  Frontend   |
-           +------+------+
-                  |
-                  v
-           +-------------+
-           |   Backend   |
-           +------+------+
-                  |
-                  v
-           +-------------+
-           |     API     |
-           +------+------+
-            |           |
-            v           v
-      +---------+   +---------+
-      |PostgreSQL|  |  MinIO  |
-      +---------+   +---------+
+Client (Browser)
+       │
+       ▼
+Frontend (Nginx / Static HTML)
+       │
+       ▼
+API Gateway (Node.js)
+       │
+       ▼
+Backend Service (Express.js)
+       │
+ ┌─────┴─────────────┐
+ ▼                   ▼
+PostgreSQL        MinIO
+(Database)      (Object Storage)
 ```
 
-Alur data:
+Penjelasan service:
 
-1. User mengakses frontend
-2. Frontend mengirim request ke backend
-3. Backend meneruskan request ke API
-4. API:
-
-   * menyimpan metadata user ke PostgreSQL
-   * menyimpan foto profil ke MinIO
+| Service  | Fungsi                                         |
+| -------- | ---------------------------------------------- |
+| frontend | Menyediakan antarmuka web                      |
+| api      | API Gateway yang meneruskan request ke backend |
+| backend  | Menangani logika aplikasi dan REST API         |
+| postgres | Database untuk menyimpan metadata              |
+| minio    | Object storage untuk menyimpan gambar          |
 
 ---
 
-# 3. Teknologi yang Digunakan
+# Teknologi yang Digunakan
 
-| Teknologi             | Fungsi                  |
-| --------------------- | ----------------------- |
-| Node.js               | Backend runtime         |
-| Express.js            | Framework REST API      |
-| PostgreSQL            | Database metadata user  |
-| MinIO                 | Penyimpanan file gambar |
-| Docker                | Containerization        |
-| Docker Compose        | Orkestrasi service      |
-| Nginx / Static Server | Frontend hosting        |
-
-### Alasan Pemilihan
-
-* **Node.js + Express** mudah digunakan untuk REST API
-* **PostgreSQL** stabil untuk relational database
-* **MinIO** kompatibel dengan Amazon S3 API
-* **Docker Compose** mempermudah deployment multi-service
+| Komponen       | Teknologi             |
+| -------------- | --------------------- |
+| Backend API    | Node.js + Express     |
+| API Gateway    | http-proxy-middleware |
+| Database       | PostgreSQL            |
+| Object Storage | MinIO                 |
+| Upload File    | Multer                |
+| Validasi       | Validator             |
+| Authentication | JWT                   |
+| Container      | Docker                |
+| Orkestrasi     | Docker Compose        |
 
 ---
 
-# 4. Struktur Folder Project
+# Struktur Project
 
 ```
-my-microservice-project
-│
-├── frontend/
-│   └── public
-│
-├── backend/
-│   └── source code backend
-│
-├── api/
-│   └── source code REST API
-│
-├── db/
-│   └── init.sql
+my-microservice-project-v2
 │
 ├── docker-compose.yml
 ├── .env
+├── .env.example
+│
+├── api
+│   ├── Dockerfile
+│   └── index.js
+│
+├── backend
+│   ├── Dockerfile
+│   └── index.js
+│
+├── frontend
+│   ├── Dockerfile
+│   └── public/index.html
+│
+├── db
+│   └── init.sql
+│
 └── README.md
 ```
 
 ---
 
-# 5. Konfigurasi Environment
+# Konfigurasi Environment Variables
 
 Buat file `.env` berdasarkan `.env.example`.
 
-Contoh:
+Contoh konfigurasi:
 
 ```
-POSTGRES_USER=postgres
-POSTGRES_PASSWORD=postgres
-POSTGRES_DB=microservice_db
+DB_HOST=postgres
+DB_USER=postgres
+DB_PASSWORD=postgres
+DB_NAME=bookdb
+DB_PORT=5432
 
-MINIO_ROOT_USER=minioadmin
-MINIO_ROOT_PASSWORD=minioadmin
+MINIO_ENDPOINT=minio
+MINIO_PORT=9000
+MINIO_ACCESS_KEY=minioadmin
+MINIO_SECRET_KEY=minioadmin
 
-API_PORT=8080
+JWT_SECRET=supersecret
+PORT_API=8080
 ```
-
-Environment variable digunakan untuk menjaga **keamanan konfigurasi sensitif**.
 
 ---
 
-# 6. Cara Menjalankan Project
+# Cara Menjalankan Aplikasi
 
-Pastikan sudah menginstall:
+Pastikan **Docker** dan **Docker Compose** sudah terinstall.
 
-* Docker
-* Docker Compose
+### 1. Clone repository
 
-Kemudian jalankan perintah berikut:
+```
+git clone <repository-url>
+cd my-microservice-project-v2
+```
+
+### 2. Jalankan semua service
 
 ```
 docker compose up --build
 ```
 
-Jika berhasil, service akan berjalan pada port berikut:
+Docker akan menjalankan service:
+
+* frontend
+* api
+* backend
+* postgres
+* minio
+
+---
+
+# Akses Service
 
 | Service       | URL                   |
 | ------------- | --------------------- |
-| API           | http://localhost:8080 |
-| MinIO Console | http://localhost:9001 |
 | Frontend      | http://localhost      |
+| API Gateway   | http://localhost:8080 |
+| MinIO Console | http://localhost:9001 |
 
----
-
-# 7. Endpoint API
-
-### Create User
+Login MinIO:
 
 ```
-POST /users
-```
-
-Form Data:
-
-```
-name
-email
-photo
-```
-
-Response:
-
-```
-201 Created
+username: minioadmin
+password: minioadmin
 ```
 
 ---
 
-### Get All Users
+# REST API Endpoint
+
+Base URL
 
 ```
-GET /users
+http://localhost:8080/api
 ```
 
-Response:
+## User Endpoint
+
+### Register User
 
 ```
-200 OK
+POST /api/register
 ```
 
----
-
-### Get User by ID
+Body JSON:
 
 ```
-GET /users/{id}
-```
-
----
-
-### Update User
-
-```
-PUT /users/{id}
-```
-
-Form Data:
-
-```
-name
-email
-photo
+{
+  "name": "John Doe",
+  "email": "john@example.com",
+  "password": "123456",
+  "birth_date": "2000-01-01"
+}
 ```
 
 ---
 
-### Delete User
+### Login User
 
 ```
-DELETE /users/{id}
-```
-
-Proses yang terjadi:
-
-* data user dihapus dari PostgreSQL
-* foto profil dihapus dari MinIO
-
----
-
-# 8. Validasi Input
-
-API menerapkan validasi dasar:
-
-* email harus format valid
-* ukuran file maksimal **5MB**
-* name dan email wajib diisi
-
-Jika input tidak valid:
-
-```
-400 Bad Request
+POST /api/login
 ```
 
 ---
 
-# 9. Testing API
+## Review Endpoint
 
-Testing dilakukan menggunakan **Postman**.
+### Create Review
 
-Berikut contoh pengujian yang dilakukan:
+```
+POST /api/reviews
+```
+
+Form-data:
+
+* book_title
+* book_author
+* publish_year
+* review_text
+* image (file)
+
+---
+
+### Get All Reviews
+
+```
+GET /api/reviews
+```
+
+---
+
+### Update Review
+
+```
+PUT /api/reviews/:id
+```
+
+---
+
+### Delete Review
+
+```
+DELETE /api/reviews/:id
+```
+
+---
+
+# Database Schema
+
+Tabel utama:
+
+### Users
+
+| Field      | Type    |
+| ---------- | ------- |
+| id         | SERIAL  |
+| name       | VARCHAR |
+| email      | VARCHAR |
+| password   | VARCHAR |
+| birth_date | DATE    |
+| photo_url  | TEXT    |
+
+### Reviews
+
+| Field        | Type    |
+| ------------ | ------- |
+| id           | SERIAL  |
+| user_id      | INTEGER |
+| book_title   | VARCHAR |
+| book_author  | VARCHAR |
+| publish_year | INTEGER |
+| review_text  | TEXT    |
+| image_url    | TEXT    |
+
+---
+
+# Pengujian API
+
+Pengujian dilakukan menggunakan **Postman**.
+
+Endpoint yang diuji:
 
 1. Create user
-   
-2. Get all users
+2. Login user
+3. Create review
+4. Get review
+5. Delete review
 
-3. Get user by id
-
-4. Update user
-
-5. Delete user
-
-Tambahkan screenshot berikut:
-
-```
-/screenshots/create.png
-/screenshots/read.png
-/screenshots/update.png
-/screenshots/delete.png
-/screenshots/minio.png
-```
+Screenshot pengujian dapat dilihat pada folder dokumentasi.
 
 ---
 
-# 10. Logging dan Debugging
+# Logging & Error Handling
 
-Log container dapat dilihat dengan perintah:
+Backend memiliki:
 
-```
-docker compose logs
-```
-
-Jika terjadi error pada API:
-
-```
-docker compose logs api
-```
+* validasi email menggunakan `validator`
+* retry koneksi database
+* logging koneksi PostgreSQL
+* error handling untuk request invalid
 
 ---
 
-# 11. Restart Stability Test
+# Keamanan dan Best Practices
 
-Project diuji dengan restart container:
+Beberapa best practices yang diterapkan:
 
-```
-docker compose down
-docker compose up
-```
-
-Hasil:
-
-* database tetap tersimpan (volume PostgreSQL)
-* file di MinIO tidak hilang
-* API kembali berjalan normal
+* Environment variables untuk konfigurasi sensitif
+* Password hashing menggunakan bcrypt
+* Authentication menggunakan JWT
+* Validasi email
+* Docker network antar service
+* Volume persistence untuk database dan storage
 
 ---
 
-# 12. Limitasi Project
+# Pengembangan Selanjutnya
 
-Beberapa keterbatasan:
+Beberapa peningkatan yang dapat dilakukan:
 
-* autentikasi user belum diimplementasikan
-* frontend masih sederhana
-* belum ada pagination pada endpoint
-
----
-
-# 13. Improvement Kedepan
-
-Pengembangan yang dapat dilakukan:
-
-* menambahkan sistem login dan JWT authentication
-* menambahkan pagination dan search
-* menambahkan rate limiting
-* deployment ke cloud server
+* Menambahkan rate limiting
+* Menambahkan pagination pada review
+* Menambahkan role user
+* Menambahkan sistem komentar
+* Deploy ke cloud server
 
 ---
 
-# 14. Author
+# Kesimpulan
 
-Nama:
-Kelas: XII TKJ
+Proyek ini berhasil mengimplementasikan aplikasi **CRUD berbasis microservice** dengan integrasi **PostgreSQL** dan **MinIO** menggunakan **Docker Compose**.
 
-Project UTS Administrasi Server Jaringan 2026
+Aplikasi menunjukkan bagaimana beberapa service dapat bekerja bersama dalam arsitektur terdistribusi untuk membangun sistem yang modular dan scalable.
+
+---
