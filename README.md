@@ -335,7 +335,12 @@ Aplikasi menunjukkan bagaimana beberapa service dapat bekerja bersama dalam arsi
 # Credit
 
 Nama: Fakhri Aulia Putra
+
 Kelas: XII TKJ 2
+
 Absen: 13
+
 Mapel: ASJ
+
 Github: _https://github.com/inifakhri/my-microservice-project-v2_
+
