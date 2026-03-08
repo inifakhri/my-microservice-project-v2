@@ -277,8 +277,6 @@ Tabel utama:
 
 # Pengujian API
 
-Pengujian dilakukan menggunakan **Postman**.
-
 Endpoint yang diuji:
 
 1. Create user
@@ -334,3 +332,10 @@ Proyek ini berhasil mengimplementasikan aplikasi **CRUD berbasis microservice** 
 Aplikasi menunjukkan bagaimana beberapa service dapat bekerja bersama dalam arsitektur terdistribusi untuk membangun sistem yang modular dan scalable.
 
 ---
+# Credit
+
+Nama: Fakhri Aulia Putra
+Kelas: XII TKJ 2
+Absen: 13
+Mapel: ASJ
+Github: _https://github.com/inifakhri/my-microservice-project-v2_
